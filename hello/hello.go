@@ -24,5 +24,7 @@ func main() {
     }
     // If no error was returned, print the returned map of
     // messages to the console.
+
+    fmt.Println("go exe")
     fmt.Println(messages)
 }
