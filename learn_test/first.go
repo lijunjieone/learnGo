@@ -10,7 +10,9 @@ import (
 	"math"
 	"os"
 	"reflect"
+	"sort"
 	"strconv"
+	"sync"
 	"time"
 	"unicode/utf8"
 )
@@ -28,14 +30,71 @@ func main() {
 
 	// testSlice()
 
-	testMap()
+	// testMap()
+	testSyncMap()
 
+}
+
+func testSyncMap() {
+
+	var scene sync.Map
+
+	scene.Store("greece", 97)
+	scene.Store("london", 100)
+	scene.Store("egypt", 200)
+
+	var m = 200
+	go func() {
+		for {
+			// k, v := scene.Load("greece")
+			m = m + 1
+			scene.Store("greece", m)
+		}
+	}()
+
+	fmt.Println(scene)
+
+	go func() {
+		for {
+			k, v := scene.Load("greece")
+			fmt.Println(k, v)
+		}
+	}()
+
+	scene.Delete("london")
+
+	scene.Range(func(k, v interface{}) bool {
+		fmt.Println("iterator:", k, v)
+		return true
+	})
+
+	for {
+
+	}
 }
 
 func testMap() {
 	scene := make(map[string]int)
 	scene["route"] = 66
 	scene["route2"] = 76
+	scene["route8"] = 86
+	scene["route5"] = 56
+
+	fmt.Println(scene)
+
+	fmt.Println(scene["2"])
+
+	var sceneList []string
+
+	for k := range scene {
+		sceneList = append(sceneList, k)
+	}
+
+	sort.Strings(sceneList)
+
+	fmt.Println(sceneList)
+
+	delete(scene, "route5")
 
 	fmt.Println(scene)
 
