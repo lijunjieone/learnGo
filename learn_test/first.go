@@ -62,8 +62,54 @@ func main() {
 
 	// testCrash()
 
-	testStruct1()
+	// testStruct1()
+	// testStruct2()
+	testStruct3()
 
+}
+
+type Address struct {
+	Province    string
+	City        string
+	ZipCode     string
+	PhoneNumber string
+}
+
+func testStruct3() {
+	addr := Address{
+		"shanxi",
+		"linfen",
+		"002400",
+		"15812345678",
+	}
+
+	println(addr)
+}
+
+type People struct {
+	name  string
+	child *People
+}
+
+func testStruct2() {
+	relation := &People{
+		name: "gradepa",
+		child: &People{
+			name: "dad",
+			child: &People{
+				name: "me",
+			},
+		},
+	}
+
+	printPeople(*relation)
+}
+
+func printPeople(p People) {
+	println(p.name)
+	if p.child != nil {
+		printPeople(*p.child)
+	}
 }
 
 type Point struct {
@@ -79,6 +125,20 @@ func testStruct1() {
 	var p Point
 	p.X = 19
 	p.Y = 20
+
+	p.X = 30
+
+	var p2 = new(Point)
+
+	var p3 = &p
+
+	print(typeof(p2))
+	print(typeof(p))
+	print(typeof(p3))
+
+	println(p2.X)
+	println(p.X)
+	println(p3.X)
 
 	println(p)
 }
