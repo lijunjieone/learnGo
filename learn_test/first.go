@@ -1,6 +1,7 @@
 package main
 
 import (
+	"container/list"
 	"flag"
 	"fmt"
 	"image"
@@ -31,7 +32,192 @@ func main() {
 	// testSlice()
 
 	// testMap()
-	testSyncMap()
+	// testSyncMap()
+
+	// testList()
+
+	// testFor()
+
+	// testChannel()
+
+	// testFunc()
+
+	// testFunc1()
+
+	// testFunc2()
+
+	testFlag()
+
+}
+
+var skillParam = flag.String("skill", "", "skill to perform")
+
+func testFlag() {
+
+	flag.Parse()
+
+	var skill = map[string]func(){
+		"fire": func() {
+			fmt.Println("chickren fire")
+		},
+		"run": func() {
+			fmt.Println("soldier run")
+		},
+		"fly": func() {
+			fmt.Println("angel fly")
+		},
+	}
+
+	if f, ok := skill[*skillParam]; ok {
+		f()
+	} else {
+		fmt.Println("skill not found")
+	}
+
+}
+
+func testFunc2() {
+	var p func()
+
+	p = testFunc1
+
+	p()
+
+	//匿名函数
+	func(data int) {
+		fmt.Println("hello ", data)
+	}(100)
+
+	//匿名函数赋值
+	f := func(data int) {
+		fmt.Println("hello ", data)
+	}
+
+	f(200)
+
+	var x []int
+	x[0] = 0
+	x[1] = 1
+
+	visit(x, f)
+
+}
+
+func visit(list []int, f func(int)) {
+	for _, v := range list {
+		f(v)
+	}
+}
+
+func testFunc1() {
+	var in Data
+	var innerData InnerData
+
+	innerData.a = 20
+
+	in.instance = innerData
+
+	var x = []int{1, 2, 3, 4}
+
+	in.complex = x
+
+	in.ptr = &in.instance
+
+	fmt.Println(in)
+
+	y := passByValue(in)
+
+	fmt.Println(y)
+
+	in2 := Data{
+		complex: []int{3, 4, 5},
+		instance: InnerData{
+			5,
+		},
+		ptr: &InnerData{1},
+	}
+
+	fmt.Println(in2)
+}
+
+func passByValue(inFunc Data) Data {
+	fmt.Printf("inFunc value:%+v \n", inFunc)
+	fmt.Printf("inFunc ptr: %p\n", inFunc)
+
+	return inFunc
+}
+
+type InnerData struct {
+	a int
+}
+
+type Data struct {
+	complex  []int
+	instance InnerData
+
+	ptr *InnerData
+}
+
+func testFunc() {
+	b := func1("testFunc", 10)
+	fmt.Println(b)
+
+	c, d := func2()
+
+	fmt.Println(c, d)
+}
+
+func func1(a string, b int) int {
+	print(a)
+	return b
+}
+
+func func2() (int, int) {
+	return 10, 20
+}
+func testFor() {
+	for y := 1; y <= 9; y++ {
+		for x := 1; x <= y; x++ {
+			fmt.Printf("%d * %d = %d   ", x, y, x*y)
+		}
+
+		fmt.Println()
+	}
+}
+
+func testChannel() {
+	c := make(chan int)
+
+	go func() {
+		c <- 1
+		c <- 2
+		c <- 3
+
+	}()
+
+	for v := range c {
+		fmt.Println(v)
+	}
+}
+
+func testList() {
+	l := list.New()
+
+	l.PushBack("canon")
+	l.PushFront(67)
+
+	element := l.PushBack("first")
+
+	l.InsertAfter("high", element)
+	l.InsertBefore("noon", element)
+
+	fmt.Println(l)
+	l.Remove(element)
+	fmt.Println(l)
+
+	for i := l.Front(); i != nil; i = i.Next() {
+		fmt.Println(i.Value)
+	}
 
 }
 
