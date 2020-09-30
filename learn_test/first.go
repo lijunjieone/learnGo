@@ -64,7 +64,153 @@ func main() {
 
 	// testStruct1()
 	// testStruct2()
-	testStruct3()
+	// testStruct3()
+
+	// testStruct4()
+	// testStruct8()
+	// testStruct7()
+	// testStruct6()
+	// testStruct5()
+
+	testInterface3()
+
+}
+
+type DataWriter interface {
+	WriteData(data interface{}) error
+}
+
+type file struct {
+}
+
+func (d *file) WriteData(data interface{}) error {
+	println(data)
+	return nil
+}
+
+func testInterface3() {
+	var f file
+	f.WriteData("this is a file.")
+
+}
+
+type BasicColor struct {
+	R, G, B float32
+}
+
+type Color2 struct {
+	BasicColor
+	Alpha float32
+}
+
+func testStruct8() {
+
+	var c Color2
+	c.B = 1
+	c.G = 2
+	c.B = 3
+
+	c.Alpha = 50.0
+
+	println(c)
+}
+
+type class struct {
+}
+
+func (c *class) do(v int) {
+	println("call method do:")
+	println(v)
+}
+
+func do(v int) {
+	println("call function do:")
+	println(v)
+}
+
+func testStruct7() {
+	var cc class
+
+	cc.do(100)
+
+	do(100)
+
+	var delegate func(int)
+
+	delegate = cc.do
+
+	delegate(200)
+
+	delegate = do
+
+	delegate(200)
+}
+
+type MyInt int
+
+func (m MyInt) isZero() bool {
+	return m == 0
+}
+
+func (m MyInt) add(other int) int {
+	return other + int(m)
+}
+
+func testStruct6() {
+	var b MyInt
+
+	b = 100
+
+	println(b.isZero())
+
+	println(b.add(20))
+}
+
+type Point struct {
+	X int
+	Y int
+}
+
+func (p Point) Add(other Point) Point {
+	return Point{p.X + other.X, p.Y + other.Y}
+}
+
+func testStruct5() {
+	p1 := Point{1, 2}
+	p2 := Point{3, 4}
+
+	result := p1.Add(p2)
+
+	println(result)
+}
+
+type Cat struct {
+	Color string
+	Name  string
+}
+
+func NewCatByName(name string) *Cat {
+	return &Cat{
+		Name: name,
+	}
+}
+
+func NewCatByColor(color string) *Cat {
+	return &Cat{
+		Color: color,
+	}
+}
+
+func testStruct4() {
+	var cat1 Cat
+	cat1.Name = "cat1"
+	cat1.Color = "black"
+
+	println(cat1)
+
+	var cat2 = NewCatByName("cat2")
+
+	println(*cat2)
 
 }
 
@@ -110,11 +256,6 @@ func printPeople(p People) {
 	if p.child != nil {
 		printPeople(*p.child)
 	}
-}
-
-type Point struct {
-	X int
-	Y int
 }
 
 type Color struct {
