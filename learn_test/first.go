@@ -78,6 +78,7 @@ func main() {
 
 type DataWriter interface {
 	WriteData(data interface{}) error
+	CanWrite() bool
 }
 
 type file struct {
@@ -88,9 +89,18 @@ func (d *file) WriteData(data interface{}) error {
 	return nil
 }
 
+func (d *file) CanWrite() bool {
+	return true
+}
+
 func testInterface3() {
-	var f file
+	f := new(file)
 	f.WriteData("this is a file.")
+
+	var m DataWriter
+
+	m = f
+	m.WriteData("this is a file by interface")
 
 }
 
