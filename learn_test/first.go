@@ -46,9 +46,188 @@ func main() {
 
 	// testFunc2()
 
-	testFlag()
+	// testFlag()
+	// testInterface1()
+
+	// testInterface2()
+
+	// testClosure2()
+	// testClosure3()
+
+	// testPrintln()
+
+	// testDefer()
+
+	// testFileSize()
+
+	// testCrash()
+
+	testStruct1()
 
 }
+
+type Point struct {
+	X int
+	Y int
+}
+
+type Color struct {
+	R, G, B byte
+}
+
+func testStruct1() {
+	var p Point
+	p.X = 19
+	p.Y = 20
+
+	println(p)
+}
+func testCrash() {
+
+	defer println("do thing1")
+	defer println("do thing2")
+	panic("crash")
+}
+func testFileSize() {
+	println(fileSize("first.go"))
+}
+
+func fileSize(filename string) int64 {
+	f, err := os.Open(filename)
+
+	if err != nil {
+		return 0
+	}
+
+	defer f.Close()
+
+	info, err := f.Stat()
+
+	if err != nil {
+		return 0
+	}
+
+	size := info.Size()
+
+	return size
+}
+func testDefer() {
+	println("defer begin")
+	defer println(1)
+	println(2)
+	defer println(3)
+	println("defer end")
+}
+
+func testPrintln() {
+	println("a", "b", 10, []int{1, 2, 34})
+	fmt.Println()
+	println("a")
+}
+
+func typeof(v interface{}) string {
+	return reflect.TypeOf(v).String()
+}
+
+func println(a ...interface{}) (n int, err error) {
+	// for _, s := range a {
+	// 	fmt.Println(typeof(s))
+	// 	// fmt.Printf("%d %T \n", s, s)
+	// }
+	return fmt.Println(a)
+}
+
+func playerGen(name string) func() (string, int) {
+	hp := 150
+
+	return func() (string, int) {
+		return name, hp
+	}
+}
+
+func testClosure3() {
+	generator := playerGen("BigDog")
+
+	name, hp := generator()
+
+	fmt.Println(name, hp)
+}
+func Accumulate(defaultValue int) func() int {
+	return func() int {
+		defaultValue++
+
+		return defaultValue
+	}
+}
+
+func testClosure2() {
+	accu := Accumulate(1)
+
+	println(accu())
+	println(accu())
+
+	fmt.Printf("%p \n", accu)
+
+	accu2 := Accumulate(20)
+
+	println(accu2())
+	println(accu2())
+
+	fmt.Printf("%p \n", accu2)
+
+}
+
+var str = "hello world"
+
+var foo = func() {
+	str = "hello func"
+	println(str)
+}
+
+func testClosure1() {
+	println(str)
+	foo()
+	println(str)
+}
+
+type FuncCaller func(interface{})
+
+func (f FuncCaller) Call(p interface{}) {
+	f(p)
+}
+
+func testInterface2() {
+	var invoker Invoker
+
+	invoker = FuncCaller(func(v interface{}) {
+		println(v)
+	})
+
+	invoker.Call("Hello")
+}
+
+type Invoker interface {
+	Call(interface{})
+}
+
+type Struct struct {
+}
+
+func (s *Struct) Call(p interface{}) {
+	// fmt.Println("from struct", p)
+	println(p)
+}
+
+func testInterface1() {
+	var invoker Invoker
+	s := new(Struct)
+	invoker = s
+	invoker.Call("Hello")
+}
+
+// func println(p interface{}) {
+// 	fmt.Println(p)
+// }
 
 var skillParam = flag.String("skill", "", "skill to perform")
 
