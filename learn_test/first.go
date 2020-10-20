@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"container/list"
+	"errors"
 	"flag"
 	"fmt"
 	"image"
@@ -9,13 +11,17 @@ import (
 	"image/png"
 	"log"
 	"math"
+	"net/http"
 	"os"
 	"reflect"
 	"sort"
 	"strconv"
 	"sync"
+	"sync/atomic"
 	"time"
 	"unicode/utf8"
+
+	"./p"
 )
 
 func main() {
@@ -72,7 +78,871 @@ func main() {
 	// testStruct6()
 	// testStruct5()
 
-	testInterface3()
+	// testInterface3()
+
+	// testTypeTansfer()
+	// testTypeTransfer2()
+
+	// testState1()
+
+	// testPackage1()
+
+	// testChannel1()
+	// testChannel2()
+	// testChannel5()
+	// testChannel4()
+	// testChannel3()
+
+	// testChannel8()
+
+	// testChannel9()
+	// testChannel7()
+
+	// testChannel10()
+
+	// testChannel11()
+
+	// testReflect1()
+	// testReflect2()
+	// testReflect3()
+	// testReflect4()
+	// testReflect6()
+	// testReflect5()
+	// testReflect7()
+	// testReflect8()
+
+	// testReflect9()
+	testReflect10()
+
+}
+
+func testReflect10() {
+	type Skill struct {
+		Name  string
+		Level int
+	}
+
+	type Actor struct {
+		Name string
+		Age  int
+
+		Skills []Skill
+	}
+
+	a := Actor{
+		Name: "Go Lang",
+		Age:  2,
+
+		Skills: []Skill{
+			{
+				Name: "Web", Level: 1,
+			},
+			{
+				Name: "Backend", Level: 2,
+			},
+			{
+				Name: "Forend", Level: 3,
+			},
+		},
+	}
+
+	if result, err := MarshalJson(a); err == nil {
+		println(result)
+	} else {
+		println(err)
+	}
+
+}
+
+func MarshalJson(v interface{}) (string, error) {
+
+	var b bytes.Buffer
+
+	if err := writeAny(&b, reflect.ValueOf(v)); err == nil {
+		return b.String(), nil
+	} else {
+		return "", nil
+	}
+}
+
+func writeAny(buff *bytes.Buffer, value reflect.Value) error {
+	switch value.Kind() {
+	case reflect.String:
+		buff.WriteString(strconv.Quote(value.String()))
+	case reflect.Int:
+		buff.WriteString(strconv.FormatInt(value.Int(), 10))
+	case reflect.Slice:
+		return writeSlice(buff, value)
+	case reflect.Struct:
+		return writeStruct(buff, value)
+	default:
+		return errors.New("unsupport kind:" + value.Kind().String())
+	}
+
+	return nil
+}
+
+func writeSlice(buff *bytes.Buffer, value reflect.Value) error {
+
+	buff.WriteString("[")
+
+	for s := 0; s < value.Len(); s++ {
+		sliceValue := value.Index(s)
+
+		writeAny(buff, sliceValue)
+
+		if s < value.Len()-1 {
+			buff.WriteString(",")
+		}
+	}
+
+	buff.WriteString("]")
+
+	return nil
+}
+
+func writeStruct(buff *bytes.Buffer, value reflect.Value) error {
+
+	valueType := value.Type()
+
+	buff.WriteString("{")
+
+	for i := 0; i < value.NumField(); i++ {
+		fieldValue := value.Field(i)
+
+		fieldType := valueType.Field(i)
+
+		buff.WriteString("\"")
+		buff.WriteString(fieldType.Name)
+		buff.WriteString("\":")
+
+		writeAny(buff, fieldValue)
+
+		if i < value.NumField()-1 {
+			buff.WriteString(",")
+		}
+
+	}
+
+	buff.WriteString("}")
+
+	return nil
+
+}
+func add(a, b int) int {
+	return a + b
+}
+
+func testReflect9() {
+	funcValue := reflect.ValueOf(add)
+
+	paramList := []reflect.Value{reflect.ValueOf(10), reflect.ValueOf(20)}
+
+	retList := funcValue.Call(paramList)
+
+	println(retList[0].Int())
+
+}
+
+func testReflect8() {
+	type dog struct {
+		LegCount int
+	}
+
+	d := dog{4}
+
+	println(d.LegCount)
+
+	valueOfDog := reflect.ValueOf(&d)
+
+	valueOfDog = valueOfDog.Elem()
+
+	vLegCount := valueOfDog.FieldByName("LegCount")
+
+	vLegCount.SetInt(3)
+
+	println(vLegCount.Int())
+
+	println(d.LegCount)
+
+	typeOfB := reflect.TypeOf(d)
+	aIns := reflect.New(typeOfB)
+	aIns = aIns.Elem()
+	aInsCount := aIns.FieldByName("LegCount")
+
+	println(d.LegCount)
+
+	fmt.Println("type", aIns.Type(), aIns.Kind())
+	aInsCount.SetInt(4)
+
+	println(d.LegCount)
+
+	println(aInsCount.Int())
+}
+
+func testReflect7() {
+	var a int = 1024
+
+	println(a)
+
+	valueOfA := reflect.ValueOf(&a)
+
+	valueOfA = valueOfA.Elem()
+	valueOfA.SetInt(20)
+
+	println(valueOfA.Int())
+	println(a)
+}
+
+type dummy struct {
+	a int
+	b string
+
+	float32
+	bool
+
+	next *dummy
+}
+
+func testReflect6() {
+
+	d := reflect.ValueOf(dummy{
+		next: &dummy{},
+	})
+
+	fmt.Println("NumField", d.NumField())
+
+	floatField := d.Field(2)
+
+	fmt.Println("Field", floatField.Type())
+
+	fmt.Println("Field By Name(\"b\").Type", d.FieldByName("b").Type())
+
+	fmt.Println("Field By Index([]int{4,0}).Type()", d.FieldByIndex([]int{4, 0}).Type())
+
+}
+func testReflect5() {
+	var a int = 1024
+
+	valueOfA := reflect.ValueOf(a)
+
+	var getA int = valueOfA.Interface().(int)
+
+	var getA2 int = int(valueOfA.Int())
+
+	println(getA)
+	println(getA2)
+}
+func testReflect4() {
+
+	type cat struct {
+		Name string
+
+		Type int `json:"type" id:"100"`
+	}
+
+	ins := cat{Name: "goLang", Type: 1}
+
+	typeOfCat := reflect.TypeOf(ins)
+
+	for i := 0; i < typeOfCat.NumField(); i++ {
+
+		fieldType := typeOfCat.Field(i)
+
+		fmt.Printf("name:%v tag:'%v' \n", fieldType.Name, fieldType.Tag)
+
+	}
+
+	if catType, ok := typeOfCat.FieldByName("Type"); ok {
+		fmt.Println(catType.Tag.Get("json"), catType.Tag.Get("id"))
+	}
+}
+
+type Enum int
+
+const (
+	Zero Enum = 0
+)
+
+func testReflect3() {
+
+	type cat struct {
+	}
+
+	ins := &cat{}
+
+	typeOfCat := reflect.TypeOf(ins)
+
+	println(typeOfCat.Name())
+	println(typeOfCat.Kind())
+
+	typeOfA := typeOfCat.Elem()
+
+	println(typeOfA.Name())
+	println(typeOfA.Kind())
+
+}
+
+func testReflect2() {
+
+	type cat struct {
+	}
+
+	typeOfCat := reflect.TypeOf(cat{})
+
+	println(typeOfCat.Name())
+	println(typeOfCat.Kind())
+
+	typeOfA := reflect.TypeOf(Zero)
+
+	println(typeOfA.Name())
+	println(typeOfA.Kind())
+
+}
+
+func testReflect1() {
+
+	var a int
+
+	var b float32
+	typeOfA := reflect.TypeOf(a)
+
+	typeOfB := reflect.TypeOf(b)
+
+	println(typeOfA.Name())
+	println(typeOfA.Kind())
+
+	println("B")
+
+	println(typeOfB.Name())
+	println(typeOfB.Kind())
+}
+func testChannel11() {
+	var wg sync.WaitGroup
+
+	var urls = []string{
+		"http://www.github.com",
+		"https://www.qiniu.com",
+		"https://www.golangtc.com",
+	}
+
+	for _, url := range urls {
+		wg.Add(1)
+
+		go func(url string) {
+			defer wg.Done()
+
+			content, err := http.Get(url)
+			println(content)
+
+			fmt.Println(url, err)
+		}(url)
+	}
+
+	wg.Wait()
+
+	println("over")
+}
+
+var seq int64
+
+var count int
+var countGuard sync.Mutex
+
+func GetCount() int {
+	countGuard.Lock()
+
+	defer countGuard.Unlock()
+
+	return count
+}
+
+func SetCount(c int) {
+	countGuard.Lock()
+	count = c
+	countGuard.Unlock()
+
+}
+
+func testChannel10() {
+	SetCount(10)
+	println(GetCount())
+}
+func GenId() int64 {
+	return atomic.AddInt64(&seq, 1)
+	// println(seq)
+
+	// return seq
+}
+
+func testChannel9() {
+
+	for i := 0; i < 20; i++ {
+		go GenId()
+	}
+
+	fmt.Println("result:", GenId())
+
+	time.Sleep(time.Second * 10)
+}
+func testChannel7() {
+	ticker := time.NewTicker(time.Millisecond * 500)
+
+	stopper := time.NewTimer(time.Second * 2)
+
+	var i int
+
+	for {
+
+		select {
+
+		case <-stopper.C:
+			println("stop")
+			goto StopHere
+		case <-ticker.C:
+			i++
+			fmt.Println("tick", i)
+		}
+	}
+
+StopHere:
+	println("done")
+}
+
+func testChannel5() {
+
+	ch := make(chan int, 3)
+
+	println(len(ch))
+
+	ch <- 1
+	ch <- 2
+	ch <- 3
+
+	data := <-ch
+	println(data)
+	data2 := <-ch
+	println(data2)
+	ch <- 4
+
+	println(len(ch))
+}
+
+func RPCClient(ch chan string, req string) (string, error) {
+
+	ch <- req
+
+	select {
+	case ack := <-ch:
+		return ack, nil
+	case <-time.After(time.Second):
+		return "", errors.New("Time out")
+	}
+}
+
+func RPCServer(ch chan string) {
+	for {
+
+		data := <-ch
+
+		fmt.Println("server received:", data)
+
+		time.Sleep(time.Second * 2)
+		ch <- "roger"
+	}
+}
+
+func testChannel8() {
+
+	ch := make(chan string)
+
+	go RPCServer(ch)
+
+	recv, err := RPCClient(ch, "hi")
+
+	if err != nil {
+		println(err)
+	} else {
+
+		fmt.Println("client received", recv)
+	}
+
+}
+
+func testChannel4() {
+	c := make(chan int)
+
+	go printer(c)
+
+	for i := 1; i <= 10; i++ {
+		c <- i
+
+		time.Sleep(time.Second)
+	}
+
+	c <- 0
+
+	<-c
+
+}
+
+func printer(c chan int) {
+
+	for {
+		data := <-c
+
+		if data == 0 {
+			break
+		}
+
+		println(data)
+	}
+
+	c <- 0
+}
+func testChannel3() {
+
+	ch := make(chan int)
+
+	go func() {
+		for i := 3; i >= 0; i-- {
+			ch <- i
+
+			time.Sleep(time.Second)
+		}
+
+	}()
+
+	for data := range ch {
+		println(data)
+
+		if data == 0 {
+			break
+		}
+	}
+
+	println("all done")
+}
+
+func testChannel2() {
+
+	ch := make(chan int)
+
+	go func() {
+		println("start go running")
+		ch <- 0
+
+		println("exit go running")
+	}()
+
+	println("wait go")
+
+	println("all done")
+}
+
+func testChannel1() {
+	go running()
+
+	var input string
+	fmt.Scanln(&input)
+}
+
+func running() {
+	var times int
+
+	for {
+		times++
+		print("times:")
+		println(times)
+		time.Sleep(time.Second)
+	}
+
+}
+
+func init() {
+	println("first.go init")
+}
+
+func testPackage1() {
+	c := p.AddSum(2, 3)
+	println(c)
+}
+
+type State interface {
+	Name() string
+	EnableSameTransit() bool
+	OnBegin()
+	OnEnd()
+	CanTransitTo(name string) bool
+}
+
+func StateName(s State) string {
+	if s == nil {
+		return "none"
+	}
+
+	return reflect.TypeOf(s).Elem().Name()
+}
+
+type StateInfo struct {
+	name string
+}
+
+func (s *StateInfo) Name() string {
+	return s.name
+}
+
+func (s *StateInfo) setName(name string) {
+	s.name = name
+}
+
+func (s *StateInfo) EnableSameTransit() bool {
+	return false
+}
+
+func (s *StateInfo) OnBegin() {
+
+}
+
+func (s *StateInfo) OnEnd() {
+
+}
+
+func (s *StateInfo) CanTransitTo(name string) bool {
+	return true
+}
+
+type StateManager struct {
+	stateByName map[string]State
+
+	OnChange func(fro, to State)
+
+	curr State
+}
+
+func (sm *StateManager) Add(s State) {
+	name := StateName(s)
+
+	s.(interface {
+		setName(name string)
+	}).setName(name)
+
+	if sm.Get(name) != nil {
+		panic("duplicate state:" + name)
+	}
+
+	sm.stateByName[name] = s
+
+}
+
+func (sm *StateManager) Get(name string) State {
+
+	if v, ok := sm.stateByName[name]; ok {
+		return v
+	}
+
+	return nil
+}
+
+func NewStateManager() *StateManager {
+	return &StateManager{
+		stateByName: make(map[string]State),
+	}
+}
+
+var ErrStateNotFound = errors.New("state not found")
+var ErrForbidSameStateTransit = errors.New("forbid same state transit")
+
+var ErrCannotTransitToState = errors.New("cannot transit to state")
+
+func (sm *StateManager) CurrState() State {
+	return sm.curr
+}
+
+func (sm *StateManager) CanCurrTransitTo(name string) bool {
+
+	if sm.curr == nil {
+		return true
+	}
+
+	if sm.curr.Name() == name && !sm.curr.EnableSameTransit() {
+		return false
+	}
+
+	return sm.curr.CanTransitTo(name)
+}
+
+func (sm *StateManager) Transit(name string) error {
+
+	next := sm.Get(name)
+
+	if next == nil {
+		return ErrStateNotFound
+	}
+
+	pre := sm.curr
+
+	if sm.curr != nil {
+		if !sm.curr.CanTransitTo(name) {
+			return ErrCannotTransitToState
+		}
+
+		sm.curr.OnEnd()
+	}
+
+	sm.curr = next
+
+	sm.curr.OnBegin()
+
+	if sm.OnChange != nil {
+		sm.OnChange(pre, sm.curr)
+	}
+
+	return nil
+}
+
+type IdleState struct {
+	StateInfo
+}
+
+func (i *IdleState) OnBegin() {
+	println("Idle State Begin")
+}
+
+func (i *IdleState) OnEnd() {
+	println("Idle State End")
+}
+
+type MoveState struct {
+	StateInfo
+}
+
+func (m *MoveState) OnBegin() {
+	println("Move State Begin")
+}
+
+func (m *MoveState) OnEnd() {
+	println("Move State End")
+}
+
+func (m *MoveState) EnableSameTransit() bool {
+	return true
+}
+
+type JumpState struct {
+	StateInfo
+}
+
+func (j *JumpState) OnBegin() {
+	println("Jump State Begin")
+}
+
+func (j *JumpState) OnEnd() {
+	println("Jump State End")
+}
+
+func (j *JumpState) CanTransitTo(name string) bool {
+	return name != "Move State"
+}
+
+func testState1() {
+
+	sm := NewStateManager()
+	sm.OnChange = func(from, to State) {
+		// print("from")
+		// print(StateName(from))
+		// print("------>")
+		// print(StateName(to))
+		// println("")
+		fmt.Printf("%s ------> %s", StateName(from), StateName(to))
+		println("")
+	}
+
+	sm.Add(new(IdleState))
+	sm.Add(new(MoveState))
+	sm.Add(new(JumpState))
+
+	transitAndReport(sm, "IdleState")
+	transitAndReport(sm, "MoveState")
+	transitAndReport(sm, "MoveState")
+	transitAndReport(sm, "MoveState")
+	transitAndReport(sm, "MoveState")
+	transitAndReport(sm, "JumpState")
+	transitAndReport(sm, "IdleState")
+
+}
+
+func transitAndReport(sm *StateManager, target string) {
+
+	if err := sm.Transit(target); err != nil {
+		fmt.Printf("fail! %s -----> %s, %s \n\n", sm.CurrState().Name(), target, err.Error())
+	}
+}
+
+func testTypeTransfer2() {
+
+	var a int = 1
+
+	var i interface{} = a
+
+	var b int = i.(int)
+
+	var c float32 = float32(b)
+
+	println(b)
+
+	println(c)
+}
+
+type Flyer interface {
+	Fly()
+}
+
+type Walker interface {
+	Walker()
+}
+
+type bird struct {
+}
+
+func (b *bird) Fly() {
+	fmt.Println("bird: fly")
+}
+
+func (b *bird) Walk() {
+	println("bird: walk")
+}
+
+type pig struct {
+}
+
+func (p *pig) Walker() {
+	println("pig:walk")
+}
+
+func testTypeTansfer() {
+	animals := map[string]interface{}{
+		"bird": new(bird),
+		"pig":  new(pig),
+	}
+
+	for name, obj := range animals {
+		f, isFlayer := obj.(Flyer)
+		w, isWalker := obj.(Walker)
+
+		print(name)
+		println(isFlayer)
+		println(isWalker)
+
+		if isFlayer {
+			f.Fly()
+		}
+
+		if isWalker {
+			w.Walker()
+		}
+
+	}
 
 }
 
